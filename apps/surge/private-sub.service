@@ -1,0 +1,22 @@
+[Unit]
+Description=Private Surge subscription gateway
+After=network-online.target private-sub-engine.service
+Requires=private-sub-engine.service
+[Service]
+User=private-sub
+Group=private-sub
+WorkingDirectory=/opt/private-sub
+EnvironmentFile=/etc/private-sub.env
+ExecStart=/opt/private-sub/venv/bin/uvicorn server:app --host 127.0.0.1 --port 8771 --no-access-log --log-level critical
+Restart=on-failure
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/private-sub
+ReadWritePaths=/opt/private-sub/engine/input
+MemoryMax=100M
+CPUQuota=35%
+[Install]
+WantedBy=multi-user.target

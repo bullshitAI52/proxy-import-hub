@@ -1,0 +1,12 @@
+.env
+*.db
+*.db-*
+*.key
+*.pem
+*.log
+state.json
+access.txt
+__pycache__/
+.venv/
+engine/
+.DS_Store

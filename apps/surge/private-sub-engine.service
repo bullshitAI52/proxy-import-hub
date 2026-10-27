@@ -1,0 +1,24 @@
+[Unit]
+Description=Local-only subconverter engine
+After=network.target
+[Service]
+User=private-sub
+Group=private-sub
+WorkingDirectory=/opt/private-sub/engine
+ExecStart=/opt/private-sub/engine/subconverter
+Restart=on-failure
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/private-sub
+IPAddressDeny=any
+IPAddressAllow=localhost
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+StandardOutput=null
+StandardError=null
+MemoryMax=120M
+CPUQuota=35%
+[Install]
+WantedBy=multi-user.target

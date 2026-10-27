@@ -1,0 +1,7 @@
+state.json
+*.env
+*.db
+*.key
+*access*.txt
+__pycache__/
+.DS_Store

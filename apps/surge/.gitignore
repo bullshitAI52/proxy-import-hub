@@ -1,0 +1,15 @@
+.env
+*.db
+*.db-*
+access.txt
+__pycache__/
+venv/
+pic-tg-before.conf
+import_xui.py
+bootstrap.py
+surge-vps-links.txt
+*.key
+*.pem
+*.log
+engine/
+.DS_Store

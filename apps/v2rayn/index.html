@@ -1,0 +1,15 @@
+<!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>v2rayN · 私有节点导入</title>
+<style>body{background:#edf3fa;color:#192d45;font:17px/1.7 system-ui;margin:0}main{max-width:700px;padding:25px;margin:40px auto}section{padding:25px;background:white;border:1px solid #d3dfeb;border-radius:18px;margin:20px 0}button{background:#235ca4;color:white;border:0;border-radius:10px;padding:15px;font:inherit;cursor:pointer}textarea{width:100%;box-sizing:border-box;height:100px;margin-top:12px}small{color:#52667a}</style>
+<main><small>PRIVATE · v2rayN</small><h1>两条节点，一次导入</h1><p>先在电脑安装 v2rayN。此页面包含私有节点凭据，请勿转发。</p>
+<section><h2>方法一：复制节点</h2><button id="nodes">一键复制全部节点</button><p>复制后切换到 v2rayN 主界面，点击服务器列表的空白处，按 <strong>Ctrl+V</strong>。也可选择“从剪贴板导入分享链接”。</p><small>这是复制后导入，不会自动唤起或修改客户端；适配不注册浏览器协议的版本。</small></section>
+<section><h2>方法二：添加订阅</h2><button id="subscription">复制订阅地址</button><p>在 v2rayN 的订阅设置中添加地址，再执行更新订阅。新版也支持在主界面粘贴 HTTPS 订阅地址。</p><small>节点更换后可由管理员重新导出并更新订阅；不会自动同步面板数据库。</small></section>
+<p id="status" role="status"></p><textarea id="fallback" hidden readonly aria-label="手动复制内容"></textarea><p>导入后先测试延迟和实际连接，再设为活动服务器。无法连接不一定是链接问题，也可能是网络、端口或证书问题。</p></main>
+<script>
+const status=document.getElementById('status'),fallback=document.getElementById('fallback');
+let cachedNodes=null;
+async function loadNodes(){const r=await fetch('nodes',{cache:'no-store'});if(!r.ok)throw Error('节点加载失败或链接已撤销');cachedNodes=await r.text()}
+loadNodes().catch(e=>status.textContent=e.message);
+async function copy(value){try{await navigator.clipboard.writeText(value);fallback.hidden=true;status.textContent='已复制。请切换到 v2rayN 导入。'}catch{fallback.value=value;fallback.hidden=false;fallback.select();status.textContent='浏览器不支持自动复制，请手动复制上方内容。'}}
+document.getElementById('nodes').onclick=()=>{if(cachedNodes)copy(cachedNodes);else{status.textContent='正在读取，请加载完成后再次点击。';loadNodes().then(()=>status.textContent='已就绪，请再次点击复制。').catch(e=>status.textContent=e.message)}};
+document.getElementById('subscription').onclick=()=>copy(new URL('subscription',location.href).href);
+</script></html>

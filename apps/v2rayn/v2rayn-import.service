@@ -1,0 +1,21 @@
+[Unit]
+Description=Private v2rayN import portal
+After=network.target
+[Service]
+User=v2rayn-import
+Group=v2rayn-import
+WorkingDirectory=/opt/v2rayn-import
+EnvironmentFile=/etc/v2rayn-import.env
+ExecStart=/usr/bin/python3 /opt/v2rayn-import/server.py
+Restart=on-failure
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+IPAddressDeny=any
+IPAddressAllow=localhost
+MemoryMax=64M
+CPUQuota=20%
+[Install]
+WantedBy=multi-user.target
