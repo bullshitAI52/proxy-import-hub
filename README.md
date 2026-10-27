@@ -8,6 +8,10 @@
 管理员输入管理密钥 → 粘贴 HTTPS 订阅或节点链接 → 生成私有分享网页 → 朋友打开网页 → 选择自己使用的软件导入。
 
 ## 可视化管理界面
+粘贴后点“生成分享网页”，系统会自动识别内容，成功时显示“识别格式、节点数和注意事项”，无需手选格式。支持普通节点列表、标准/URL-safe Base64 和基础 Clash YAML；链接返回登录网页、空内容、无效编码、Surge/圈 X 完整配置时会提示原因。
+
+Clash YAML 输入采用保守支持范围：基础 SS（无插件）、Trojan TCP/TLS、VMess TCP/WS（可带 TLS）。任何节点包含未知字段、VLESS/Reality、gRPC 或其他未支持参数时，整份输入拒绝并指出节点序号，不偷偷删节点。**原始 `vless://` 节点链接仍可透传**，这不代表 YAML 中的 VLESS 已支持，也不代表 Surge 能用 VLESS。HTTPS 源每次更新重新识别；只包含外部 provider 的 YAML 不会被自动抓取。
+
 新首页提供手机自适应的大按钮和三步表单。生成成功后直接点击“复制分享链接”发给朋友，也可以“预览分享页”；历史列表支持复制、打开、撤销。复制权限被浏览器阻止时，会选中地址供手动复制。密钥不保存到浏览器本地存储，刷新后需重新填写。
 
 界面需要配套后端部署后使用，不是直接打开 HTML 文件就能生成有效链接。本次 UI 更新只上传到新仓库，没有部署或改动旧服务。
@@ -25,7 +29,7 @@
 - Clash：打开分享页 → 点“打开 Clash 导入配置”。客户端需要注册 `clash://`（例如 Clash Verge Rev）。部分版本可能直接导入或启用，先备份原配置。失败时复制 Clash 专用地址，在客户端订阅管理中从 URL 导入，然后选择节点。
 - 两种输出都需要独立的本地 subconverter 引擎，当前版本 v0.9.0；转换能力受引擎限制，不支持的协议可能被省略。失败会明确报错，不返回伪装成可用配置的空内容。
 - Clash 输出是最小 YAML 配置：端口 7890，禁止局域网连接到代理监听端口；IPv4 局域网目标直连，其余走所选节点。不是原订阅服务商的完整分流规则。圈 X 只输出节点资源。
-- 管理入口仍只接受节点 URI / Base64 节点列表或返回这些内容的 HTTPS 订阅，**不支持直接输入 Clash YAML**。新增输出格式不等于新增输入格式。
+- 管理入口接受节点 URI / Base64 节点列表、基础 Clash YAML，或返回这些内容的 HTTPS 订阅，**支持基础 SS、Trojan TCP/TLS、VMess TCP/WS 的内嵌 Clash YAML；其他协议和高级参数会拒绝**。不会导入原始配置的规则、DNS、脚本或外部 provider。
 - 新入口只更新 GitHub，未部署；路由和格式单元测试不等于转换引擎联调或真实客户端验收。
 
 接口依据：[圈 X 官方 URL Scheme](https://github.com/crossutility/Quantumult-X/blob/master/url-scheme.md)、[Clash Verge Rev URL Schemes](https://www.clashverge.dev/guide/url_schemes.html)、[subconverter 输出格式](https://github.com/tindy2013/subconverter/tree/v0.9.0)。
@@ -77,7 +81,7 @@
 - apps/v2rayn：原 v2rayN 项目的脱敏源码快照，包括只读 3x-ui 导出器。
 - 一个根级测试工作流；子目录保留的工作流仅作历史参考，不会在根仓库触发。
 
-源格式：节点 URI 或 Base64 节点订阅。当前统一入口不支持 Clash YAML 或完整客户端配置。HTTPS源在访问订阅时刷新，直接粘贴节点则保存为快照。VLESS可以透传给支持的客户端，但不意味着能转换到Surge。
+源格式：节点 URI、Base64 节点订阅或基础 Clash YAML。统一入口还支持上述基础 Clash YAML，但不支持其他完整客户端配置。HTTPS源在访问订阅时刷新，直接粘贴节点则保存为快照。VLESS可以透传给支持的客户端，但不意味着能转换到Surge。
 
 ## 独立部署说明（不要覆盖旧项目）
 需要 Linux、Python 3.10+、systemd 和独立 HTTPS 路径。建议：

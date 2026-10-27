@@ -4,11 +4,13 @@ New, undeployed unified repository. Existing Surge/v2rayN repositories, deployme
 
 ## Quantumult X and Clash additions
 
+Input detection runs when generating a share and on HTTPS-source refresh. The UI reports detected format, node count and warnings. It recognizes URI lists, standard/URL-safe Base64 and basic Clash YAML. HTML/login pages, empty input, malformed encodings, provider-only YAML and Surge/Quantumult X configuration files are rejected with a readable explanation. YAML with any unsupported node or advanced field is rejected as a whole, not silently truncated. YAML VLESS/Reality is not yet supported; raw `vless://` URI passthrough remains supported. External provider URLs are never fetched. YAML rules, DNS and scripts are not imported.
+
 The share page now includes five clients. Quantumult X uses the official `quantumult-x:///add-resource` scheme to append a node resource without replacing existing rules or rewrites. Update the resource and select a node in the client. Copy the dedicated subscription URL if the button fails.
 
 Clash uses `clash://install-config?url=...`, as documented by Clash Verge Rev; not every Clash client registers this scheme. Back up your existing configuration first: some versions may import or activate directly. Alternatively, copy the dedicated URL into subscription management.
 
-Both formats use the separate local subconverter v0.9.0 engine and may omit unsupported protocols. Quantumult X receives a node list. Clash receives a minimal YAML profile (port 7890, LAN listener disabled, private IPv4 destinations direct, other traffic through the selected node), not the source provider's full routing policy. Input remains URI/Base64 subscriptions, **not Clash YAML**. Both entries are undeployed and not device-tested; unit tests use mocked conversion responses, not a real engine integration test.
+Both formats use the separate local subconverter v0.9.0 engine and may omit unsupported protocols. Quantumult X receives a node list. Clash receives a minimal YAML profile (port 7890, LAN listener disabled, private IPv4 destinations direct, other traffic through the selected node), not the source provider's full routing policy. Input supports URI/Base64 and a conservative Clash YAML subset (basic SS, Trojan TCP/TLS, VMess TCP/WS). Advanced or unsupported nodes cause rejection, not silent omission. Both entries are undeployed and not device-tested; unit tests use mocked conversion responses, not a real engine integration test.
 
 References: [Quantumult X](https://github.com/crossutility/Quantumult-X/blob/master/url-scheme.md), [Clash Verge Rev](https://www.clashverge.dev/guide/url_schemes.html).
 
@@ -57,7 +59,7 @@ Copy the subscription URL, open v2rayN, focus the server list rather than a text
 - Different node counts: Surge conversion can reject or omit unsupported protocols. Raw subscriptions preserve nodes, but client support still varies.
 - Anyone holding a share or subscription URL can retrieve its nodes. Send privately; never publish these URLs in repositories, forums or screenshots.
 
-Root files implement the integrated portal; apps/ contains sanitized snapshots of the two original projects. Supported source formats are node URIs and Base64 URI subscriptions, not Clash YAML. Unsupported Surge protocols cannot be converted merely by changing format. Shadowrocket integration has not been device-tested.
+Root files implement the integrated portal; apps/ contains sanitized snapshots of the two original projects. Supported inputs include node URIs, Base64 URI subscriptions, and basic embedded Clash YAML nodes. Unsupported Surge protocols cannot be converted merely by changing format. Shadowrocket integration has not been device-tested.
 
 Deploy separately under /opt/proxy-import-hub, with private state in /var/lib/proxy-import-hub, a new environment file and user, gateway port8773, and a separate network-restricted subconverter engine on25502. Follow [deployment and security notes](README.md); never enable the original service units unchanged or replace existing default routing.
 

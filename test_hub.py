@@ -68,5 +68,44 @@ class Tests(unittest.TestCase):
         self.assertEqual(server.normalize(base64.b64encode(text.encode())).strip(),text)
         for value in [b'proxies: []',b'file:///etc/passwd',b'',b'<html>error</html>']:
             with self.assertRaises(ValueError):server.normalize(value)
+    def test_detect_yaml_and_refresh(self):
+        from subscription_input import detect
+        yaml=b'proxies:\n- {name: Test, type: trojan, server: example.com, port: 443, password: "a@b"}\nrules: [MATCH,DIRECT]'
+        info=detect(yaml)
+        self.assertEqual(info['format'],'Clash YAML')
+        self.assertIn('a%40b@example.com',info['text'])
+        self.assertTrue(info['warnings'])
+        with patch.object(server.core,'fetch',return_value=yaml):
+            response=self.c.post('/api/shares',headers=self.auth,json={'source':'https://example.com/yaml'})
+            self.assertEqual(response.status_code,200)
+            self.assertEqual(response.json()['format'],'Clash YAML')
+            key=response.json()['url'].rsplit('/',1)[-1]
+            raw=self.c.get('/raw/'+key)
+            self.assertEqual(base64.b64decode(raw.text).decode(),info['text'])
+            with patch.object(server.core,'convert',return_value=['N001 = trojan, example.com, 443, password=test']) as conv:
+                self.assertEqual(self.c.get('/feed/'+key+'/mac.conf').status_code,200)
+                self.assertEqual(conv.call_args.args[0],info['text'].encode())
+    def test_detection_boundaries(self):
+        from subscription_input import detect
+        cases=[b'proxy-providers: {remote: {url: https://example.com}}',
+               b'proxies: &a [*a]',b'proxies: !!python/object/apply:os.system [echo]',
+               b'proxies: [{type: vless, server: example.com, port: 443}]',
+               b'proxies: [{type: ss, server: example.com, port: 443, password: test, cipher: aes-128-gcm, plugin: unknown}]',
+               b'[Proxy]\nA = trojan, example.com, 443',b'<html>login</html>']
+        for case in cases:
+            with self.subTest(case=case),self.assertRaises(ValueError):detect(case)
+        info=detect(base64.b64encode(b'trojan://test@example.com:443'))
+        self.assertEqual(info['format'],'Base64 节点订阅')
+    def test_yaml_ss_vmess(self):
+        from subscription_input import detect
+        text='proxies:\n- {type: ss, server: "::1", port: 443, cipher: aes-128-gcm, password: test}\n- {type: vmess, server: example.com, port: 443, uuid: 12345678-1234-1234-1234-123456789012, tls: true, network: ws, ws-opts: {path: /socket, headers: {Host: example.com}}}'
+        info=detect(text.encode())
+        self.assertEqual(info['count'],2)
+        lines=info['text'].splitlines()
+        self.assertIn('@[::1]:443',lines[0])
+        import json
+        node=json.loads(base64.b64decode(lines[1][8:]))
+        self.assertEqual(node['path'],'/socket')
+        self.assertEqual(node['tls'],'tls')
 
 if __name__=='__main__':unittest.main()

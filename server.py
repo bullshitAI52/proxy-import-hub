@@ -5,6 +5,7 @@ import json
 import re
 import secrets
 import client_formats
+from subscription_input import detect
 from pathlib import Path
 from urllib.parse import quote
 from fastapi import FastAPI, HTTPException, Request
@@ -16,16 +17,7 @@ app.middleware('http')(core.privacy)
 SUPPORTED={'ss','ssr','vmess','vless','trojan','hysteria2','hy2','tuic'}
 
 def normalize(data):
-    text=data.decode('utf-8-sig').strip()
-    if not re.match(r'^[a-z0-9]+://',text):
-        try:text=base64.b64decode(text+'===',validate=False).decode().strip()
-        except Exception:raise ValueError('目前接受节点分享链接或 Base64 节点订阅；不接受 Clash YAML/完整客户端配置')
-    lines=[line.strip() for line in text.splitlines() if line.strip()]
-    if not lines or len(lines)>1000:raise ValueError('节点为空或超过1000条')
-    for line in lines:
-        if line.split('://',1)[0] not in SUPPORTED or '://' not in line or any(c.isspace() for c in line):
-            raise ValueError('包含无效节点行或不支持的源格式')
-    return '\n'.join(lines)+'\n'
+    return detect(data)['text']
 
 def source(key):
     with core.db() as con:row=con.execute('SELECT secret FROM subs WHERE id=?',(key,)).fetchone()
@@ -60,12 +52,12 @@ async def create(request:Request):
             with core.db() as con:
                 if con.execute('SELECT count(*) FROM subs').fetchone()[0]>=20:raise HTTPException(400,'最多20个分享')
             if value.startswith('https://'):
-                core.validate_url(value);raw=normalize(core.fetch(value));stored=value
+                core.validate_url(value);info=detect(core.fetch(value));stored=value
             else:
-                raw=normalize(value.encode());stored='inline:'+base64.b64encode(raw.encode()).decode()
+                info=detect(value.encode());stored='inline:'+base64.b64encode(info['text'].encode()).decode()
             key=secrets.token_urlsafe(32)
             with core.db() as con:con.execute('INSERT INTO subs VALUES (?,?,?)',(key,name,core.CRYPT.encrypt(stored.encode())))
-            return {'url':core.BASE+'/share/'+key,'count':len(raw.splitlines())}
+            return {'url':core.BASE+'/share/'+key,'count':info['count'],'format':info['format'],'warnings':info['warnings']}
         except HTTPException:raise
         except ValueError as e:raise HTTPException(400,str(e))
         except Exception:raise HTTPException(502,'无法获取源链接；未记录私密内容')
@@ -76,7 +68,14 @@ async def create(request:Request):
 def revoke(key:str,request:Request):return core.delete(key,request)
 
 @app.get('/feed/{key}/{platform}.conf')
-def surge(key:str,platform:str):return core.feed(key,platform)
+def surge(key:str,platform:str):
+    if platform not in {'mac','ios'}:raise HTTPException(404)
+    if not core.LOCK.acquire(blocking=False):raise HTTPException(429,'请稍后重试')
+    try:
+        text=source(key)
+        try:return PlainTextResponse(core.profile(core.convert(text.encode()),key,platform))
+        except Exception:raise HTTPException(502,'没有兼容节点或转换失败，请保留原配置并检查转换引擎')
+    finally:core.LOCK.release()
 
 @app.get('/raw/{key}')
 def raw(key:str):
