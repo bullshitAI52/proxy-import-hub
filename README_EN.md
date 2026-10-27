@@ -2,6 +2,8 @@
 
 New, undeployed unified repository. Existing Surge/v2rayN repositories, deployments and links are unchanged.
 
+The responsive administration UI provides a three-step form, a generated-link result card, copy and preview buttons, and a history list with copy/open/revoke actions. If clipboard access fails, the URL is selected for manual copying. Admin keys are not persisted to browser storage. The UI requires the deployed backend; opening the HTML file alone cannot create valid shares. This UI update does not deploy or modify existing services.
+
 Authenticated administrators paste HTTPS subscriptions or node URIs to generate a private share page. Recipients choose Surge (macOS/iOS import schemes), Shadowrocket (best-effort add scheme with manual fallback), or v2rayN (copy subscription and paste/import in the client). No automatic clicks or client-confirmation bypasses.
 
 ## What “one-click import” means here
