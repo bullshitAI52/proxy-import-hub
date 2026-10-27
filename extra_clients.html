@@ -1,0 +1,11 @@
+<section><h2>圈 X · Quantumult X</h2>
+<a href="{{QX}}">打开圈 X 添加节点订阅</a>
+<p>只追加节点资源，不替换现有规则或重写。添加后更新资源，选择节点并启用连接。需要支持 add-resource 的版本；尚未实机验证。</p>
+<button type="button" data-copy="qx-url">复制圈 X 专用订阅</button><textarea id="qx-url" aria-label="圈 X 订阅地址" readonly>{{QX_URL}}</textarea></section>
+<section><h2>Clash · 兼容客户端</h2>
+<a href="{{CLASH}}">打开 Clash 导入配置</a>
+<p>适用于注册了 clash:// 的客户端，例如 Clash Verge Rev；不是所有 Clash 客户端通用。部分版本可能直接导入或启用，请先备份原配置。新配置仅局域网直连，其余流量走所选节点，默认端口 7890。</p>
+<button type="button" data-copy="clash-url">复制 Clash 专用订阅</button><textarea id="clash-url" aria-label="Clash 订阅地址" readonly>{{CLASH_URL}}</textarea>
+<p>按钮无反应时，在客户端的订阅管理中从 URL 导入上方地址。输出为 YAML，但管理入口仍不接受 YAML 输入。尚未实机验证。</p></section>
+<p id="extra-status" role="status"></p><p>两种格式均由自建转换引擎生成，不支持的节点可能被省略；添加按钮不代表所有协议可用。</p>
+<script>document.querySelectorAll('[data-copy]').forEach(button=>{button.onclick=async()=>{const field=document.getElementById(button.dataset.copy);try{await navigator.clipboard.writeText(field.value);document.getElementById('extra-status').textContent='已复制，请在对应软件中添加订阅'}catch{field.focus();field.select();document.getElementById('extra-status').textContent='请长按或按 Ctrl/Cmd+C 复制选中的地址'}}});</script>

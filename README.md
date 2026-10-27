@@ -17,6 +17,18 @@
 | Surge Mac / iPhone | URL Scheme 导入按钮 | 协议不兼容时转换失败或省略节点 |
 | Shadowrocket 小火箭 | shadowrocket://add/ 按钮 + 复制订阅备用 | 未实机验收，版本和系统可能限制唤起 |
 | v2rayN | 复制 HTTPS 订阅，再 Ctrl+V 或手动添加 | 不承诺网页直接唤起所有版本 |
+| 圈 X（Quantumult X） | 追加节点资源按钮 + 专用订阅复制 | 需要支持 add-resource 的版本，尚未实机验证 |
+| Clash 兼容客户端 | clash:// 导入按钮 + 专用 YAML 订阅复制 | 以 Clash Verge Rev 的协议为依据，并非所有客户端通用，尚未实机验证 |
+
+## 新增：圈 X 和 Clash 怎么用
+- 圈 X：打开分享页 → 点“打开圈 X 添加节点订阅” → 在客户端更新节点资源、选择节点。使用 `add-resource` 追加节点，不使用替换已有资源的 `update-configuration`，不安装重写或分流规则。按钮无反应时复制圈 X 专用地址，在客户端添加节点资源。
+- Clash：打开分享页 → 点“打开 Clash 导入配置”。客户端需要注册 `clash://`（例如 Clash Verge Rev）。部分版本可能直接导入或启用，先备份原配置。失败时复制 Clash 专用地址，在客户端订阅管理中从 URL 导入，然后选择节点。
+- 两种输出都需要独立的本地 subconverter 引擎，当前版本 v0.9.0；转换能力受引擎限制，不支持的协议可能被省略。失败会明确报错，不返回伪装成可用配置的空内容。
+- Clash 输出是最小 YAML 配置：端口 7890，禁止局域网连接到代理监听端口；IPv4 局域网目标直连，其余走所选节点。不是原订阅服务商的完整分流规则。圈 X 只输出节点资源。
+- 管理入口仍只接受节点 URI / Base64 节点列表或返回这些内容的 HTTPS 订阅，**不支持直接输入 Clash YAML**。新增输出格式不等于新增输入格式。
+- 新入口只更新 GitHub，未部署；路由和格式单元测试不等于转换引擎联调或真实客户端验收。
+
+接口依据：[圈 X 官方 URL Scheme](https://github.com/crossutility/Quantumult-X/blob/master/url-scheme.md)、[Clash Verge Rev URL Schemes](https://www.clashverge.dev/guide/url_schemes.html)、[subconverter 输出格式](https://github.com/tindy2013/subconverter/tree/v0.9.0)。
 
 不会自动点击、绕过客户端确认或替朋友开启 VPN。网页按钮只是提出导入请求，成功生成配置不等于代理实际可用。
 

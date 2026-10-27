@@ -2,6 +2,16 @@
 
 New, undeployed unified repository. Existing Surge/v2rayN repositories, deployments and links are unchanged.
 
+## Quantumult X and Clash additions
+
+The share page now includes five clients. Quantumult X uses the official `quantumult-x:///add-resource` scheme to append a node resource without replacing existing rules or rewrites. Update the resource and select a node in the client. Copy the dedicated subscription URL if the button fails.
+
+Clash uses `clash://install-config?url=...`, as documented by Clash Verge Rev; not every Clash client registers this scheme. Back up your existing configuration first: some versions may import or activate directly. Alternatively, copy the dedicated URL into subscription management.
+
+Both formats use the separate local subconverter v0.9.0 engine and may omit unsupported protocols. Quantumult X receives a node list. Clash receives a minimal YAML profile (port 7890, LAN listener disabled, private IPv4 destinations direct, other traffic through the selected node), not the source provider's full routing policy. Input remains URI/Base64 subscriptions, **not Clash YAML**. Both entries are undeployed and not device-tested; unit tests use mocked conversion responses, not a real engine integration test.
+
+References: [Quantumult X](https://github.com/crossutility/Quantumult-X/blob/master/url-scheme.md), [Clash Verge Rev](https://www.clashverge.dev/guide/url_schemes.html).
+
 The responsive administration UI provides a three-step form, a generated-link result card, copy and preview buttons, and a history list with copy/open/revoke actions. If clipboard access fails, the URL is selected for manual copying. Admin keys are not persisted to browser storage. The UI requires the deployed backend; opening the HTML file alone cannot create valid shares. This UI update does not deploy or modify existing services.
 
 Authenticated administrators paste HTTPS subscriptions or node URIs to generate a private share page. Recipients choose Surge (macOS/iOS import schemes), Shadowrocket (best-effort add scheme with manual fallback), or v2rayN (copy subscription and paste/import in the client). No automatic clicks or client-confirmation bypasses.

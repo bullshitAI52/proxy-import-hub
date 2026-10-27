@@ -20,7 +20,7 @@ class Tests(unittest.TestCase):
         self.assertEqual(r.status_code,200)
         key=r.json()['url'].rsplit('/',1)[-1]
         page=self.c.get('/share/'+key)
-        for marker in ['surgeconfig:///install-config','surge:///install-config','shadowrocket://add/','v2rayN']:
+        for marker in ['surgeconfig:///install-config','surge:///install-config','shadowrocket://add/','v2rayN','quantumult-x:///add-resource','clash://install-config']:
             self.assertIn(marker,page.text)
         self.assertNotIn('<unsafe>',page.text)
         data=self.c.get('/raw/'+key)
@@ -30,6 +30,34 @@ class Tests(unittest.TestCase):
         self.assertEqual(self.c.delete('/api/shares/'+key,headers=self.auth).status_code,200)
         self.assertEqual(self.c.get('/raw/'+key).status_code,404)
         self.assertEqual(self.c.get('/share/'+key).status_code,404)
+        for target in ('quanx','clash'):
+            self.assertEqual(self.c.get('/converted/'+key+'/'+target).status_code,404)
+    def test_converted(self):
+        r=self.c.post('/api/shares',headers=self.auth,json={'source':'trojan://test@example.com:443#test'})
+        key=r.json()['url'].rsplit('/',1)[-1]
+        with patch.object(server.client_formats,'convert',return_value='converted') as convert:
+            for target in ('quanx','clash'):
+                result=self.c.get('/converted/'+key+'/'+target)
+                self.assertEqual(result.status_code,200)
+                self.assertEqual(result.text,'converted')
+                self.assertEqual(convert.call_args.args[2],target)
+        with patch.object(server.client_formats,'convert',side_effect=ValueError('private source')):
+            result=self.c.get('/converted/'+key+'/clash')
+            self.assertEqual(result.status_code,502)
+            self.assertNotIn('private source',result.text)
+        self.assertEqual(self.c.get('/converted/'+key+'/unknown').status_code,404)
+    def test_format_outputs(self):
+        from client_formats import validate
+        import yaml
+        qx='trojan=example.com:443, password=test, tag=Sample'
+        self.assertEqual(validate(qx,'quanx'),qx+'\n')
+        profile=yaml.safe_load(validate('proxies:\n- {name: DIRECT, type: trojan, server: example.com, port: 443, password: test}\nproxy-providers: {evil: {url: https://example.com}}','clash'))
+        self.assertEqual(profile['proxies'][0]['name'],'Node-001')
+        self.assertFalse(profile['allow-lan'])
+        self.assertNotIn('proxy-providers',profile)
+        for bad in ('proxies: []','<html>Error</html>'):
+            with self.assertRaises(ValueError):validate(bad,'clash')
+        with self.assertRaises(ValueError):validate('error','quanx')
     def test_url_source(self):
         with patch.object(server.core,'fetch',return_value=b'trojan://test@example.com:443#test'):
             r=self.c.post('/api/shares',headers=self.auth,json={'source':'https://example.com/sub'})

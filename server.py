@@ -4,6 +4,7 @@ import importlib.util
 import json
 import re
 import secrets
+import client_formats
 from pathlib import Path
 from urllib.parse import quote
 from fastapi import FastAPI, HTTPException, Request
@@ -83,17 +84,34 @@ def raw(key:str):
     try:return PlainTextResponse(base64.b64encode(source(key).encode()).decode())
     finally:core.LOCK.release()
 
+@app.get('/converted/{key}/{target}')
+def converted(key:str,target:str):
+    if target not in {'quanx','clash'}:raise HTTPException(404)
+    if not core.LOCK.acquire(blocking=False):raise HTTPException(429,'请稍后重试')
+    try:
+        text=source(key)
+        try:result=client_formats.convert(core,text,target)
+        except Exception:raise HTTPException(502,'转换失败或没有兼容节点，请保留原配置；请管理员检查转换引擎和协议支持')
+        return PlainTextResponse(result,media_type='application/yaml' if target=='clash' else 'text/plain')
+    finally:core.LOCK.release()
+
 @app.get('/share/{key}')
 def share(key:str):
     with core.db() as con:row=con.execute('SELECT id FROM subs WHERE id=?',(key,)).fetchone()
     if not row:raise HTTPException(404,'分享已撤销')
     template=Path(__file__).with_name('share.html').read_text()
+    template=template.replace('</main>',Path(__file__).with_name('extra_clients.html').read_text()+'</main>')
     raw_url=core.BASE+'/raw/'+key
+    qx_url=core.BASE+'/converted/'+key+'/quanx'
+    clash_url=core.BASE+'/converted/'+key+'/clash'
     import html
     values={
         'MAC':'surgeconfig:///install-config?url='+quote(core.links(key)['mac'],safe=''),
         'IOS':'surge:///install-config?url='+quote(core.links(key)['ios'],safe=''),
         'ROCKET':'shadowrocket://add/'+raw_url,
-        'RAW':raw_url}
+        'RAW':raw_url,
+        'QX_URL':qx_url,'CLASH_URL':clash_url,
+        'QX':'quantumult-x:///add-resource?remote-resource='+quote(json.dumps({'server_remote':[qx_url+', tag=Proxy-Import-Hub']},separators=(',',':')),safe=''),
+        'CLASH':'clash://install-config?url='+quote(clash_url,safe='')}
     for name,value in values.items():template=template.replace('{{'+name+'}}',html.escape(value,quote=True))
     return HTMLResponse(template)
