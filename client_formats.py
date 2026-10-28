@@ -3,13 +3,47 @@ import base64
 import os
 import re
 import tempfile
+import uuid
 from pathlib import Path
+from urllib.parse import urlsplit,parse_qs,unquote
 import httpx
 import yaml
+
+def vless_clash(line):
+    from subscription_input import node_uri
+    p=urlsplit(line)
+    if p.scheme!='vless' or not p.hostname or not p.port or p.password:raise ValueError('Invalid VLESS')
+    params=parse_qs(p.query,keep_blank_values=True)
+    allowed={'encryption','type','security','sni','fp','alpn','flow','pbk','sid','path','host'}
+    if set(params)-allowed or any(len(v)!=1 for v in params.values()):raise ValueError('Unsupported VLESS parameter')
+    q={k:v[0] for k,v in params.items()}
+    security=q.get('security','none');network=q.get('type','tcp')
+    if security not in {'none','tls','reality'}:raise ValueError('Unsupported security')
+    if q.get('encryption','none')!='none':raise ValueError('Unsupported encryption')
+    if security!='reality' and any(k in q for k in ('pbk','sid')):raise ValueError('Unexpected Reality parameters')
+    if network!='ws' and any(k in q for k in ('path','host')):raise ValueError('Unexpected WS parameters')
+    node={'name':unquote(p.fragment) or 'VLESS','type':'vless','server':p.hostname,'port':p.port,
+          'uuid':str(uuid.UUID(p.username or '')),'network':network,'tls':security!='none'}
+    for a,b in [('sni','servername'),('fp','client-fingerprint'),('flow','flow')]:
+        if a in q:node[b]=q[a]
+    if 'alpn' in q:node['alpn']=q['alpn'].split(',')
+    if security=='reality':node['reality-opts']={'public-key':q.get('pbk',''),'short-id':q.get('sid','')}
+    if network=='ws':node['ws-opts']={'path':q.get('path','/'),'headers':{'Host':q['host']} if q.get('host') else {}}
+    node_uri(node)  # Reuse strict validation; never silently discard unknown parameters.
+    if security=='reality':node.setdefault('client-fingerprint','chrome')
+    return node
 
 def convert(core, text, target):
     if target not in {'quanx', 'clash'}:
         raise ValueError('Unsupported target')
+    direct=[]
+    if target=='clash':
+        remaining=[]
+        for line in text.splitlines():
+            if line.startswith('vless://'):direct.append(vless_clash(line))
+            else:remaining.append(line)
+        text='\n'.join(remaining)
+        if not text.strip():return validate(yaml.safe_dump({'proxies':direct}),'clash')
     fd, name = tempfile.mkstemp(prefix='input-', dir=core.INPUT)
     try:
         with os.fdopen(fd, 'wb') as stream:
@@ -21,7 +55,13 @@ def convert(core, text, target):
                 'append_info': 'false', 'udp': 'true'})
         if response.status_code != 200 or len(response.content) > core.MAX:
             raise ValueError('Conversion failed')
-        return validate(response.text, target)
+        output=response.text
+        if direct:
+            parsed=yaml.safe_load(output)
+            if not isinstance(parsed,dict) or not isinstance(parsed.get('proxies'),list):raise ValueError('Invalid conversion')
+            parsed['proxies'].extend(direct)
+            output=yaml.safe_dump(parsed)
+        return validate(output, target)
     finally:
         Path(name).unlink(missing_ok=True)
 

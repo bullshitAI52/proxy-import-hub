@@ -10,7 +10,11 @@ import server
 from fastapi.testclient import TestClient
 
 class Tests(unittest.TestCase):
-    def setUp(self):self.c=TestClient(server.app);self.auth={'Authorization':'Bearer test-key'}
+    def setUp(self):
+        self.c=TestClient(server.app);self.auth={'Authorization':'Bearer test-key'}
+        server.CACHE.clear();server.LIMITER.clear()
+        with server.db() as con:
+            con.execute('DELETE FROM subs');con.execute('DELETE FROM share_meta')
     def test_private(self):
         self.assertEqual(self.c.get('/api/shares').status_code,401)
         self.assertEqual(self.c.get('/share/missing').status_code,404)
@@ -42,6 +46,7 @@ class Tests(unittest.TestCase):
                 self.assertEqual(result.text,'converted')
                 self.assertEqual(convert.call_args.args[2],target)
         with patch.object(server.client_formats,'convert',side_effect=ValueError('private source')):
+            server.CACHE.clear()
             result=self.c.get('/converted/'+key+'/clash')
             self.assertEqual(result.status_code,502)
             self.assertNotIn('private source',result.text)

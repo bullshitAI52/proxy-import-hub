@@ -1,68 +1,44 @@
 # Proxy Import Hub
 
-New, undeployed unified repository. Existing Surge/v2rayN repositories, deployments and links are unchanged.
+[中文](README.md)
 
-## Quantumult X and Clash additions
+Public source repository; **not deployed**. Existing repositories, servers and old links are unchanged.
 
-Input detection runs when generating a share and on HTTPS-source refresh. The UI reports detected format, node count and warnings. It recognizes URI lists, standard/URL-safe Base64 and basic Clash YAML. HTML/login pages, empty input, malformed encodings, provider-only YAML and Surge/Quantumult X configuration files are rejected with a readable explanation. YAML with any unsupported node or advanced field is rejected as a whole, not silently truncated. YAML VLESS/Reality is not yet supported; raw `vless://` URI passthrough remains supported. External provider URLs are never fetched. YAML rules, DNS and scripts are not imported.
+## Workflow
 
-The share page now includes five clients. Quantumult X uses the official `quantumult-x:///add-resource` scheme to append a node resource without replacing existing rules or rewrites. Update the resource and select a node in the client. Copy the dedicated subscription URL if the button fails.
+Deploy the independent backend, open the admin UI, enter your admin key and paste a subscription URL, URI list, Base64 subscription, supported Clash YAML or HTTPS provider group. Run the compatibility precheck, read its per-client/per-node guidance, choose a name and lifetime (permanent / 7 / 30 days), then confirm creation. Send the private share URL or show its locally generated QR code. Editing source text requires another check.
 
-Clash uses `clash://install-config?url=...`, as documented by Clash Verge Rev; not every Clash client registers this scheme. Back up your existing configuration first: some versions may import or activate directly. Alternatively, copy the dedicated URL into subscription management.
+Recipients install their client and open the share page:
+- Surge: choose macOS/iOS import; this conversion chain does not support VLESS.
+- Shadowrocket: best-effort import button, manual subscription fallback; not device-tested.
+- v2rayN: copy subscription and paste/add it inside the client; **not browser one-click import**.
+- Quantumult X: append a node resource, then update/select nodes. Existing rules are not replaced. The current conversion chain does not support VLESS.
+- Clash: scheme import for compatible registered clients, or copy its YAML subscription URL. Some versions may activate immediately; back up the old configuration. VLESS/Reality requires a supporting core such as Mihomo.
 
-Both formats use the separate local subconverter v0.9.0 engine and may omit unsupported protocols. Quantumult X receives a node list. Clash receives a minimal YAML profile (port 7890, LAN listener disabled, private IPv4 destinations direct, other traffic through the selected node), not the source provider's full routing policy. Input supports URI/Base64 and a conservative Clash YAML subset (basic SS, Trojan TCP/TLS, VMess TCP/WS). Advanced or unsupported nodes cause rejection, not silent omission. Both entries are undeployed and not device-tested; unit tests use mocked conversion responses, not a real engine integration test.
+## Five additions
 
-References: [Quantumult X](https://github.com/crossutility/Quantumult-X/blob/master/url-scheme.md), [Clash Verge Rev](https://www.clashverge.dev/guide/url_schemes.html).
+1. **Compatibility precheck:** conservative static protocol guidance, not connectivity or real-client validation. Pass-through/generation does not guarantee usable accounts or transport settings.
+2. **Lifetime:** permanent, 7 or 30 days. Expired share/feed/QR endpoints return 410, revoked ones 404, including cache hits. Legacy entries without metadata remain permanent. Expired entries remain listed and count toward the 20-share limit until revoked. Downloaded node credentials are not disabled.
+3. **QR sharing:** local SVG generation, no third-party QR service. QR encodes the private share page, not an automatic VPN connection. Treat it as a bearer credential.
+4. **VLESS/Reality YAML:** supports basic VLESS TCP/WS and TCP Reality, including UUID, SNI, fingerprint, public key, short-id and supported Vision flow. Unknown extensions, gRPC, xhttp, packet-encoding and VLESS encryption extensions are rejected. Reality short-id is a quoted even-length hexadecimal string up to 16 characters; omitted fingerprint defaults to chrome. Basic SS (no plugin), Trojan TCP/TLS and VMess TCP/WS remain supported. Basic VLESS is converted directly to Clash YAML rather than relying on subconverter v0.9.0. Other converted protocols still use the independent local engine.
+5. **Limits/cache:** single-process global limit of 240 requests/minute and 20 POST checks/creates/minute; 429 includes Retry-After. One fetch/conversion task at a time. Successful results cached for up to 300 seconds, max 128 entries / 16 MiB payload (excluding object overhead). No failure caching. Expiration/revocation is checked before serving cached data. Restart clears cache and limits. Use one application worker; multi-worker shared coordination is not implemented. Configure reverse-proxy and process resource limits too.
 
-The responsive administration UI provides a three-step form, a generated-link result card, copy and preview buttons, and a history list with copy/open/revoke actions. If clipboard access fails, the URL is selected for manual copying. Admin keys are not persisted to browser storage. The UI requires the deployed backend; opening the HTML file alone cannot create valid shares. This UI update does not deploy or modify existing services.
+## Automatic subscription-group expansion
 
-Authenticated administrators paste HTTPS subscriptions or node URIs to generate a private share page. Recipients choose Surge (macOS/iOS import schemes), Shadowrocket (best-effort add scheme with manual fallback), or v2rayN (copy subscription and paste/import in the client). No automatic clicks or client-confirmation bypasses.
+Supports Clash `proxy-providers` of type http with public HTTPS/443 URLs, supplied as a root URL or pasted YAML. Fetches node lists, Base64, supported YAML and at most two nested provider levels. Deduplicates URIs ignoring remarks and VMess JSON ignoring ps, retaining the first name; different encodings may not deduplicate.
 
-## What “one-click import” means here
+Limits: 8 distinct child subscriptions, 2 MB each, 8 MB aggregate downloaded content, 2 MB normalized output, 1000 pre-dedup merged nodes. A 60-second budget is checked before starting each child fetch; it is not a hard deadline interrupting an active request. Existing network timeouts remain. Duplicate URLs fetch once; cycles, excessive depth, private-network targets, non-HTTPS URLs, local-file providers, YAML anchors/aliases, custom headers, filters/overrides and encrypted providers are rejected. HTTPS fetches revalidate/pin public DNS addresses on redirects.
 
-All three clients have entries, but **not all three have verified one-click importing**:
+Any child failure aborts the whole generation/update, with a numbered error that does not echo secret URLs. Original grouping, rules, DNS, scripts, health checks and provider refresh intervals are not imported; local paths are never read. Pasted groups are encrypted and their children refresh after cache expiry. Plain pasted nodes are snapshots; HTTPS roots refresh. Existing client copies are not deleted on failure.
 
-| Client | Current behavior | Verification limit |
-|---|---|---|
-| Surge, macOS / iOS | Button requests opening Surge to import a configuration | Requires installation and confirmation; the new unified portal has not passed real-device acceptance testing |
-| Shadowrocket | Best-effort app-opening button, with copy-subscription fallback | Not device-tested; app/version compatibility is not guaranteed |
-| v2rayN, Windows | Copy the subscription, then paste/add it in the app | This is not browser one-click import |
+## Deployment and privacy
 
-## For administrators
+Follow the [Chinese deployment instructions](README.md#独立部署说明不要覆盖旧项目): independent directory/user/environment/state, gateway port 8773 and engine port 25502, no replacement of old Nginx default routes. Install all pinned requirements including PyYAML and qrcode. Never enable the historical apps/ service units unchanged.
 
-1. Deploy this project separately first. A GitHub repository URL is not a working share page. Existing Surge pages do not automatically gain the new client entries.
-2. Open the deployed administration page and enter your admin key. Do not send that key to recipients.
-3. Enter a recognizable name and an HTTPS subscription URL, node URIs, or a Base64 node list.
-4. Generate a share page and privately send its URL to your friend. Do not share server passwords or administrator credentials.
-5. Revoke the share in the administration page when no longer needed. This blocks future retrieval, not node credentials already downloaded; disable those on the node server if necessary.
+Keys are not persisted to browser storage. Source records are encrypted at rest; runtime memory/cache and conversion temporary files can contain plaintext. Back up the database and encryption key separately. URLs/QR codes are bearer secrets. Revocation does not invalidate already-downloaded node passwords; use separate accounts for friends. No automatic 3x-ui account creation or traffic quotas.
 
-## For friends receiving a link
+## Validation
 
-Install your client first, then open the private share URL in a browser. Allow the browser to open the app if prompted. The page cannot install software or approve VPN permissions for you.
+Run `python -m unittest test_hub test_features test_groups -v`. 26 tests cover formats, authorization, encryption, compatibility, expiry/revocation, QR, VLESS/Reality roundtrips, limits/cache and provider expansion/SSRF rejection. Engine conversion tests mainly use mocks; direct VLESS conversion uses the local implementation. Local browser testing used dummy nodes to check precheck, seven-day expiry, results and QR rendering. Real client import/connectivity and VPS deployment are not completed.
 
-### Surge
-
-Choose the macOS or iPhone import button matching your device. Allow opening Surge, confirm importing, select the configuration and enable the connection as instructed by the app. If nothing opens, verify installation and try the system browser. Unsupported source protocols may leave no usable nodes; clicking again will not fix protocol incompatibility.
-
-### Shadowrocket
-
-Try the import button and confirm adding the subscription if the app opens. If it fails, copy the subscription URL from the page, find the subscription-add entry in Shadowrocket, paste it, save and update. Menu names vary by version. Select a node and enable the connection. **The button remains unverified on a real device.**
-
-### v2rayN
-
-Copy the subscription URL, open v2rayN, focus the server list rather than a text field, and press Ctrl+V. Supporting versions interpret an HTTPS URL as a subscription. Otherwise, add it manually through subscription management, save and update the subscription. Select a node and configure the appropriate connection/system-proxy mode in the client. **Pasting is still required; do not advertise this as fully automatic browser setup.**
-
-## Troubleshooting and privacy
-
-- Cannot open the share: check that the new service is deployed and the share has not been revoked. A private GitHub repository is not the deployed portal.
-- Imported but cannot connect: import success does not verify the server, account, quota, certificate or local network.
-- Different node counts: Surge conversion can reject or omit unsupported protocols. Raw subscriptions preserve nodes, but client support still varies.
-- Anyone holding a share or subscription URL can retrieve its nodes. Send privately; never publish these URLs in repositories, forums or screenshots.
-
-Root files implement the integrated portal; apps/ contains sanitized snapshots of the two original projects. Supported inputs include node URIs, Base64 URI subscriptions, and basic embedded Clash YAML nodes. Unsupported Surge protocols cannot be converted merely by changing format. Shadowrocket integration has not been device-tested.
-
-Deploy separately under /opt/proxy-import-hub, with private state in /var/lib/proxy-import-hub, a new environment file and user, gateway port8773, and a separate network-restricted subconverter engine on25502. Follow [deployment and security notes](README.md); never enable the original service units unchanged or replace existing default routing.
-
-Treat share/feed URLs as secrets. Revocation blocks future retrieval but cannot revoke previously downloaded node credentials. Use separate 3x-ui clients for friends. No live credentials, state, or original server configuration are included.
-
-Run `python -m unittest test_hub -v`. Tests cover routing, authentication, formats, encrypted storage and revocation, not real-device connectivity.
+References: [Mihomo providers](https://wiki.metacubex.one/en/config/proxy-providers/), [VLESS](https://wiki.metacubex.one/en/config/proxies/vless/), [Quantumult X](https://github.com/crossutility/Quantumult-X/blob/master/url-scheme.md), [Clash Verge Rev](https://www.clashverge.dev/guide/url_schemes.html).
