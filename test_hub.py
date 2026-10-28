@@ -27,6 +27,14 @@ class Tests(unittest.TestCase):
         for marker in ['surgeconfig:///install-config','surge:///install-config','shadowrocket://add/','v2rayN','quantumult-x:///add-resource','clash://install-config']:
             self.assertIn(marker,page.text)
         self.assertNotIn('<unsafe>',page.text)
+        cards=['id="surge"','id="rocket"','id="v2rayn"','id="qx"','id="clash"']
+        positions=[page.text.index(card) for card in cards]
+        self.assertEqual(positions,sorted(positions))
+        self.assertEqual(page.text.count('class="card"'),5)
+        for target in ['surge-mac-url','surge-ios-url','rocket-url','v2rayn-url','qx-url','clash-url']:
+            self.assertIn('data-copy="'+target+'"',page.text)
+            self.assertIn('id="'+target+'"',page.text)
+        self.assertNotIn('{{',page.text)
         data=self.c.get('/raw/'+key)
         self.assertEqual(base64.b64decode(data.text).decode().strip(),node)
         self.assertEqual(data.headers['Cache-Control'],'no-store')

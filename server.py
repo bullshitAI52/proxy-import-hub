@@ -199,7 +199,6 @@ def converted(key:str,target:str):
 def share(key:str):
     row=active(key)
     template=Path(__file__).with_name('share.html').read_text()
-    template=template.replace('</main>',Path(__file__).with_name('extra_clients.html').read_text()+'</main>')
     raw_url=core.BASE+'/raw/'+key
     qx_url=core.BASE+'/converted/'+key+'/quanx'
     clash_url=core.BASE+'/converted/'+key+'/clash'
@@ -207,6 +206,7 @@ def share(key:str):
     expiry=time.strftime('%Y-%m-%d %H:%M UTC',time.gmtime(row[1])) if row[1] else '永久（撤销前有效）'
     template=template.replace('<h1>', '<p>有效期：'+expiry+'。到期不能再读取订阅，但不会停用已下载的节点账号。</p><h1>',1)
     values={
+        'MAC_URL':core.links(key)['mac'],'IOS_URL':core.links(key)['ios'],
         'MAC':'surgeconfig:///install-config?url='+quote(core.links(key)['mac'],safe=''),
         'IOS':'surge:///install-config?url='+quote(core.links(key)['ios'],safe=''),
         'ROCKET':'shadowrocket://add/'+raw_url,

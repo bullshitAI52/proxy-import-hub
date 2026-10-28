@@ -6,6 +6,8 @@ Public source repository; **not deployed**. Existing repositories, servers and o
 
 ## Workflow
 
+The share page uses five ordered, separate cards: Surge, Shadowrocket, v2rayN, Quantumult X and Clash. Each has its own import/copy actions, manual URL fallback and local feedback. Surge separates macOS/iPhone. Shadowrocket and v2rayN have separate buttons even though they share the same raw subscription format; v2rayN is explicitly copy-and-paste, not app launch.
+
 Deploy the independent backend, open the admin UI, enter your admin key and paste a subscription URL, URI list, Base64 subscription, supported Clash YAML or HTTPS provider group. Run the compatibility precheck, read its per-client/per-node guidance, choose a name and lifetime (permanent / 7 / 30 days), then confirm creation. Send the private share URL or show its locally generated QR code. Editing source text requires another check.
 
 Recipients install their client and open the share page:

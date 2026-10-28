@@ -1,1 +1,34 @@
-<!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>选择你的软件</title><style>body{font:18px/1.8 system-ui;color:#183149;background:#edf3fa}main{max-width:700px;padding:24px;margin:30px auto}section{background:white;border-radius:16px;padding:22px;margin:20px 0}a,button{display:inline-block;padding:12px;background:#235ca4;color:white;border-radius:9px;border:0;font:inherit;margin:6px;text-decoration:none}textarea{width:100%;height:95px;box-sizing:border-box}</style><main><h1>你用哪个软件？</h1><p>先安装对应软件，再点击下面的按钮。系统或软件可能要求确认。</p><section><h2>Surge</h2><a href="{{MAC}}">Mac 导入</a><a href="{{IOS}}">iPhone 导入</a><p>不兼容的协议可能导入失败或被省略，不能靠转换改变节点协议。</p></section><section><h2>小火箭 · Shadowrocket</h2><a href="{{ROCKET}}">打开小火箭导入</a><p>使用 shadowrocket://add/ 导入方式，尚未在你的设备验收。如无法唤起，复制下方订阅，在小火箭中添加 Subscribe 并更新。</p></section><section><h2>v2rayN</h2><button id="copy">复制订阅地址</button><p>切换到 v2rayN 主界面按 Ctrl+V，或手动添加订阅并更新。不声称网页能自动唤起所有版本。</p><textarea id="url" readonly>{{RAW}}</textarea><p id="status" role="status"></p></section><p>请勿公开或转发给无关人员。配置导入不代表已连接，需测试节点。请用 Safari 或系统浏览器打开。</p></main><script>document.getElementById('copy').onclick=async()=>{try{await navigator.clipboard.writeText(document.getElementById('url').value);document.getElementById('status').textContent='已复制，请到客户端导入'}catch{document.getElementById('url').select();document.getElementById('status').textContent='请手动复制上方链接'}};</script></html>
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>选择软件 · 导入订阅</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font:16px/1.7 system-ui;color:#193348;background:#f0f5f8}main{max-width:760px;padding:24px 16px;margin:auto}h1{font-size:30px}h2{margin:0;font-size:23px}.card{background:white;border:1px solid #dbe5eb;border-radius:18px;padding:24px;margin:18px 0}.number{color:#157765;font-size:14px;font-weight:700}.hint{color:#607383;font-size:14px}.actions{display:flex;flex-wrap:wrap;gap:10px;margin:14px 0}a,button{min-height:48px;display:inline-flex;align-items:center;justify-content:center;padding:12px 16px;border-radius:10px;border:1px solid #b5c7d1;font:inherit;text-decoration:none;background:white;color:#193348;cursor:pointer}a.primary{background:#157765;border-color:#157765;color:white}textarea{width:100%;padding:10px;font:14px/1.5 system-ui;resize:vertical;border:1px solid #b5c7d1;border-radius:8px}details{margin-top:12px}summary{cursor:pointer}.status{color:#176750}nav{display:flex;gap:8px;flex-wrap:wrap}nav a{padding:8px 12px;font-size:14px}a:focus-visible,button:focus-visible,textarea:focus-visible,summary:focus-visible{outline:3px solid #4099e5;outline-offset:3px}@media(max-width:520px){.card{padding:18px}.actions>*{flex:1 1 100%}}
+</style></head><body><main>
+<h1>选择你用的软件</h1><p>五个软件各有独立入口。找到自己的软件，只操作对应那一栏即可。</p>
+<nav aria-label="跳转到软件"><a href="#surge">Surge</a><a href="#rocket">小火箭</a><a href="#v2rayn">v2rayN</a><a href="#qx">圈 X</a><a href="#clash">Clash</a></nav>
+<section class="card" id="surge" aria-labelledby="surge-title"><span class="number">01</span><h2 id="surge-title">Surge</h2><p>选择你的设备，打开 Surge 后按提示导入。</p>
+<div class="actions"><a class="primary" href="{{MAC}}">Mac：打开 Surge 导入</a><a class="primary" href="{{IOS}}">iPhone：打开 Surge 导入</a></div>
+<div class="actions"><button type="button" data-copy="surge-mac-url">复制 Mac 配置地址</button><button type="button" data-copy="surge-ios-url">复制 iPhone 配置地址</button></div>
+<details><summary>按钮没反应？查看手动导入地址</summary><p>在 Surge 配置管理中从 URL 导入对应地址。</p><label>Mac<textarea id="surge-mac-url" readonly>{{MAC_URL}}</textarea></label><label>iPhone<textarea id="surge-ios-url" readonly>{{IOS_URL}}</textarea></label></details>
+<p class="status" role="status"></p><p class="hint">先备份原配置。当前转换链不支持 VLESS/Reality，其他节点仍需验证。</p></section>
+<section class="card" id="rocket" aria-labelledby="rocket-title"><span class="number">02</span><h2 id="rocket-title">小火箭 · Shadowrocket</h2><p>先尝试打开小火箭；如无反应，就复制本栏订阅地址添加并更新。</p>
+<div class="actions"><a class="primary" href="{{ROCKET}}">尝试打开小火箭导入</a><button type="button" data-copy="rocket-url">复制小火箭订阅地址</button></div>
+<details><summary>查看小火箭订阅地址</summary><textarea id="rocket-url" aria-label="小火箭订阅地址" readonly>{{RAW}}</textarea></details><p class="status" role="status"></p><p class="hint">唤起按钮尚未实机验证，能否导入取决于安装版本。</p></section>
+<section class="card" id="v2rayn" aria-labelledby="v2rayn-title"><span class="number">03</span><h2 id="v2rayn-title">v2rayN</h2><p>复制后打开 v2rayN，在服务器列表按 Ctrl+V；也可在订阅管理中粘贴地址，再更新订阅。</p>
+<div class="actions"><button type="button" data-copy="v2rayn-url">复制 v2rayN 订阅地址</button></div>
+<details><summary>查看 v2rayN 订阅地址</summary><textarea id="v2rayn-url" aria-label="v2rayN 订阅地址" readonly>{{RAW}}</textarea></details><p class="status" role="status"></p><p class="hint">这一步需要切换软件粘贴，不是浏览器直接一键导入。</p></section>
+<section class="card" id="qx" aria-labelledby="qx-title"><span class="number">04</span><h2 id="qx-title">圈 X · Quantumult X</h2><p>添加节点资源后，在圈 X 内更新资源、选择节点。</p>
+<div class="actions"><a class="primary" href="{{QX}}">打开圈 X 添加订阅</a><button type="button" data-copy="qx-url">复制圈 X 专用订阅</button></div>
+<details><summary>查看圈 X 订阅地址</summary><textarea id="qx-url" aria-label="圈 X 订阅地址" readonly>{{QX_URL}}</textarea></details><p class="status" role="status"></p><p class="hint">只追加节点，不替换原规则和重写。当前转换链不支持 VLESS；尚未实机验证。</p></section>
+<section class="card" id="clash" aria-labelledby="clash-title"><span class="number">05</span><h2 id="clash-title">Clash · 兼容客户端</h2><p>点击导入，或复制本栏 YAML 地址，在客户端订阅管理中从 URL 导入。</p>
+<div class="actions"><a class="primary" href="{{CLASH}}">打开 Clash 导入配置</a><button type="button" data-copy="clash-url">复制 Clash 专用订阅</button></div>
+<details><summary>查看 Clash 订阅地址</summary><textarea id="clash-url" aria-label="Clash 订阅地址" readonly>{{CLASH_URL}}</textarea></details><p class="status" role="status"></p><p class="hint">需要注册 clash:// 的客户端，例如 Clash Verge Rev。部分版本可能直接启用配置，请先备份。VLESS/Reality 需要支持的内核。默认端口 7890、IPv4 局域网直连，其余走所选节点；尚未实机验证。</p></section>
+<footer class="hint">先安装对应软件，建议用系统浏览器打开。导入不代表已经连接成功。分享及订阅地址都是访问凭据，请勿公开。</footer>
+</main><script>
+document.querySelectorAll('[data-copy]').forEach(button=>{
+ button.onclick=async()=>{
+  const card=button.closest('section'),field=document.getElementById(button.dataset.copy),status=card.querySelector('.status');
+  try{await navigator.clipboard.writeText(field.value);status.textContent='已复制，请到对应软件导入。'}
+  catch{field.closest('details').open=true;field.focus();field.select();status.textContent='已展开并选中地址，请长按或按 Ctrl/Cmd+C 手动复制。'}
+ };
+});
+</script></body></html>
